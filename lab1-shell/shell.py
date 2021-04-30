@@ -16,6 +16,12 @@ def tokenize_string_literal(string, i, quote_char):
     return string_literal, i 
 
 
+def peek(string, index):
+    if index >= len(string):
+        return ""
+    return string[index]
+
+
 def tokenize(string):
     tokens = []
     cur_token = ""
@@ -34,6 +40,24 @@ def tokenize(string):
         elif char in [" ", "\n", "\t"]:
             tokens.append(cur_token)
             cur_token = ""
+            i += 1
+        elif char in ["|", "&"]:
+            # handle when stuff is butted up against operators
+            # pretty sure this is correct behavior?
+            tokens.append(cur_token)
+            cur_token = ""
+ 
+            if peek(string, i + 1) == char:
+                tokens.append(2 * char)
+                i += 2
+            else:
+                tokens.append(char)
+                i += 1
+        elif char == ";":
+            tokens.append(cur_token)
+            cur_token = ""
+
+            tokens.append(";")
             i += 1
         else:
             cur_token += char
@@ -88,7 +112,7 @@ def execute_statement(statement):
 
 def execute(line):
     tokens = tokenize(line)
-    # print(tokens)
+    print(tokens)
     execute_statement(tokens)
 
 
