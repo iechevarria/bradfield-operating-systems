@@ -83,11 +83,13 @@ BUILT_INS = {
 }
 
 
-def fork_and_exec(command, args):
-    # child_id is 0 for child
+def fork_and_exec(state, command, args):
+    # child_id is 0 for child process
     child_id = os.fork()
     if child_id > 0:
+        state["fg_child_id"] = child_id
         _, exit_code = os.wait()
+        state["fg_child_id"] = None
         return exit_code
     else:
         try:
@@ -97,7 +99,7 @@ def fork_and_exec(command, args):
             sys.exit(0)
 
 
-def execute_statement(statement):
+def execute_statement(state, statement):
     if not statement:
         return 0
 
@@ -107,20 +109,28 @@ def execute_statement(statement):
     if command in BUILT_INS:
         BUILT_INS[command](args)
     else:
-        return fork_and_exec(command, args)
+        return fork_and_exec(state, command, args)
 
 
-def execute(line):
+def execute(state, line):
     tokens = tokenize(line)
     print(tokens)
-    execute_statement(tokens)
+    execute_statement(state, tokens)
 
 
 def main():
+    state = {"fg_child_id": None}
+
+    def signal_handler(sig, frame):
+        if state["fg_child_id"]:
+            os.kill(state["fg_child_id"], signal.SIGINT)
+
+    signal.signal(signal.SIGINT, signal_handler)
+
     while True:
         try:
             line = input(":) ")
-            execute(line)
+            execute(state, line)
         except EOFError:
             print("\nSee ya later partner ")
             return 0
