@@ -124,6 +124,10 @@ def main():
     def signal_handler(sig, frame):
         if state["fg_child_id"]:
             os.kill(state["fg_child_id"], signal.SIGINT)
+            # TODO: add a newline in a smarter way. this is not a smart way
+            #       when the python repl is interrputed, extra printed lines
+            #       are added which is unsightly and incorrect
+            print()
 
     signal.signal(signal.SIGINT, signal_handler)
 
