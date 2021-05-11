@@ -5,7 +5,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-int START = 2, END = 20;
+int START = 2, END = 10000;
 char *TESTS[] = {"brute_force", "brutish", "miller_rabin"};
 int num_tests = sizeof(TESTS) / sizeof(char *);
 
@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
       // we are the parent, so send test case to child and read results
       write(testfds[i][1], &n, sizeof(n));
       read(resultfds[i][0], &result, sizeof(result));
-      printf("%15s says %ld %s prime\n", TESTS[i], n, result ? "is" : "IS NOT");
+      // printf("%15s says %ld %s prime\n", TESTS[i], n, result ? "is" : "IS NOT");
     }
   }
 }
