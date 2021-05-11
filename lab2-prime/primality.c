@@ -9,7 +9,7 @@ int brutish(long n);
 int miller_rabin(long n);
 
 void exit_with_usage() {
-  fprintf(stderr, "Usage: ./primality [brute_force|brutish|miller_rabin]\n");
+  fprintf(stderr, "Usage: ./primality [brute_force|brutish|miller_rabin] [start] [end]\n");
   exit(1);
 }
 
@@ -17,7 +17,7 @@ int main(int argc, char*argv[]) {
   long num;
   int (*func)(long), tty;
 
-  if (argc != 2)
+  if (argc != 4)
     exit_with_usage();
 
   if (strcmp(argv[1], "brute_force") == 0)
@@ -29,16 +29,15 @@ int main(int argc, char*argv[]) {
   else
     exit_with_usage();
 
+  long start = atoi(argv[2]);
+  long end = atoi(argv[3]);
+
   tty = isatty(fileno(stdin));
 
   if (tty) {
-
-    fprintf(stderr, "Running \"%s\", enter a number:\n> ", argv[1]);
-
-    while (scanf("%ld", &num) == 1) {
-      printf("%d\n", (*func)(num));
+    for (num = start; num <= end; num += 1) {
+      printf("%lu: %d\n", num, (*func)(num));
       fflush(stdout);
-      fprintf(stderr, "> ");
     }
   } else {
     for (;;) {
