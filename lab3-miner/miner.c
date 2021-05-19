@@ -55,16 +55,6 @@ int successful(uint8_t hash[32]) {
   return 1;
 }
 
-// TODO instead of just printing, communicate the successful
-// hash value back once found
-void hash_and_print() {
-
-
-  // printf("Found summand to be %u, since sha256(%u + %u) = ", x, nonce, x);
-  // _print_hash(hash);
-  // printf(", after %d attempts.\n", attempts);
-}
-
 void *thread_func(void *id) {
   int worker = *(int *) id;
 
@@ -77,7 +67,7 @@ void *thread_func(void *id) {
       x = rand();
       sum = nonce + x;
       memset(hash, 0x00, sizeof hash);
-      calc_sha_256(hash, (const void *)(&sum), 32U);
+      calc_sha_256(hash, (const void *)(&sum), 32);
     } while (!successful(hash));
 
   
@@ -86,7 +76,7 @@ void *thread_func(void *id) {
     printf("   sum: %u\n", sum);
 
     memset(hash, 0x00, sizeof hash);
-    calc_sha_256(hash, (const void *)(&sum), 32U);
+    calc_sha_256(hash, (const void *)(&sum), 32);
     _print_hash(hash);
     printf("   sum: %u\n", sum);
 
@@ -134,7 +124,7 @@ int main() {
     cur = buffer[rp];
     sum = nonce + cur.value;
     memset(hash, 0x00, sizeof hash);
-    calc_sha_256(hash, (const void *)(&sum), 32U);
+    calc_sha_256(hash, (const void *)(&sum), 32);
 
     _print_hash(hash);
     printf("   sum: %u\n", sum);
