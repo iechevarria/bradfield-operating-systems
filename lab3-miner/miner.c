@@ -3,12 +3,13 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
 #include "sha-256.h"
 
 #define DIFFICULTY 2 // number of bytes of leading 0's
-#define WORKER_COUNT 4 // number of worker threads
+#define WORKER_COUNT 1 // number of worker threads
 #define BUF_SIZE 256 // number of entries in ring buffer
 
 //
@@ -67,41 +68,34 @@ void hash_and_print() {
 void *thread_func(void *id) {
   int worker = *(int *) id;
 
-  printf("HI! I AM A THREAD. MY ID IS %d\n", worker);
-
   uint8_t hash[32];
-  int attempts = 0;
-  uint32_t value, sum;
+  uint32_t x, sum;
 
   // do the work
   while (1) {
     do {
-      attempts++;
-      value = rand();
-      sum = nonce + value;
-      calc_sha_256(hash, (const void *)(&sum), 32);
+      x = rand();
+      sum = nonce + x;
+      memset(hash, 0x00, sizeof hash);
+      calc_sha_256(hash, (const void *)(&sum), 32U);
     } while (!successful(hash));
 
-    struct mine_result to_write = {.value=value, .worker=worker};
-    printf("HELLO I HAVE A RESULT %d\n", worker);
+  
+    struct mine_result to_write = {.value=x, .worker=worker};
+    _print_hash(hash);
+    printf("   sum: %u\n", sum);
+
+    memset(hash, 0x00, sizeof hash);
+    calc_sha_256(hash, (const void *)(&sum), 32U);
+    _print_hash(hash);
+    printf("   sum: %u\n", sum);
 
     sem_wait(writable);
 
-    printf("HELLO I AM WRITING %d\n", worker);
-
     pthread_mutex_lock(&lock);
-
-    printf("HELLO I AM PAST MUTEX %d\n", worker);
-
     buffer[wp] = to_write;
     wp = (wp + 1) % BUF_SIZE;
-
-    printf("HELLO I HAVE WRITTEN %d\n", worker);
-
     pthread_mutex_unlock(&lock);
-
-    printf("HELLO I UNLOCKED %d\n", worker);
-
 
     sem_post(readable);
   }
@@ -117,7 +111,7 @@ int main() {
   sem_unlink("/tmp/bsem1");
   sem_unlink("/tmp/bsem2");
   readable = sem_open("/tmp/bsem1", O_CREAT, 0644, 0);
-  writable = sem_open("/tmpl/bsem2", O_CREAT, 0644, BUF_SIZE);
+  writable = sem_open("/tmp/bsem2", O_CREAT, 0644, BUF_SIZE);
 
   printf("Creating worker threads\n");
   for (int i = 0; i < WORKER_COUNT; i++) {
@@ -139,16 +133,21 @@ int main() {
 
     cur = buffer[rp];
     sum = nonce + cur.value;
-    calc_sha_256(hash, (const void *)(&sum), 32);
+    memset(hash, 0x00, sizeof hash);
+    calc_sha_256(hash, (const void *)(&sum), 32U);
+
+    _print_hash(hash);
+    printf("   sum: %u\n", sum);
+    printf("successful? %d\n", successful(hash));
 
     if (successful(hash)) {
-      rp = (rp + 1) % BUF_SIZE;
-      sem_post(writable);
+      printf("Worker %d successfully mined %u\n", cur.worker, cur.value);
+      successes[cur.worker] += 1;
+      nonce = rand();
     }
 
-    printf("Worker %d successfully mined %u", cur.worker, cur.value);
-
-    successes[cur.worker] += 1;
-    nonce = rand();
+    printf("rp is %d\n", rp);
+    rp = (rp + 1) % BUF_SIZE;
+    sem_post(writable);
   }
 }
