@@ -6,7 +6,7 @@ Why does allocating multiple arrays ahead of time "fix" the issue in `reuse`?
 for i in {1..5}; do echo "run $i"; ./run.sh; echo; done;
 ```
 
-output:
+Output:
 ```
 run 1
 + clang -g3 -o a.out main.c sha-256.c
